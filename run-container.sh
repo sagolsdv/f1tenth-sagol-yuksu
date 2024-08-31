@@ -6,4 +6,5 @@ sudo xhost +si:localuser:root
 # run container with privilege mode, host network, display, and mount workspace on host
 sudo docker run -it --privileged --network host -e DISPLAY=$DISPLAY \
     -v /tmp/.X11-unix/:/tmp/.X11-unix -v /dev:/dev \
+	-v .:/sagol \
     sagol:base
