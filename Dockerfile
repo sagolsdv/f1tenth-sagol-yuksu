@@ -78,6 +78,14 @@ RUN cd / && mkdir -p sim_ws/src && \
     cd .. && \
 	rosdep install -i -y --from-paths src --rosdistro $ROS_DISTRO && \
     colcon build
+
+# sagol
+RUN mkdir -p /sagol_ws/src
+COPY src /sagol_ws/src
+RUN source /opt/ros/galactic/setup.bash && \
+    cd /sagol_ws && \
+	rosdep install -i -y --from-paths src --rosdistro $ROS_DISTRO && \
+    colcon build
     
 COPY config/joy_teleop.yaml /f1tenth_ws/install/f1tenth_stack/share/f1tenth_stack/config/joy_teleop.yaml
 COPY scripts/run.sh /
