@@ -44,6 +44,8 @@ RUN ulimit -c unlimited
 RUN cd /autoware && source /opt/ros/galactic/setup.bash && \
     colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 
+RUN pip install "wheel<0.40.0"
+
 # f1tenth system
 RUN mkdir -p /f1tenth_ws/src
 RUN cd /f1tenth_ws && colcon build
@@ -86,6 +88,16 @@ RUN source /opt/ros/galactic/setup.bash && \
     cd /sagol_ws && \
 	rosdep install -i -y --from-paths src --rosdistro $ROS_DISTRO && \
     colcon build
+
+# FT-Autonomous
+RUN git clone https://github.com/FT-Autonomous/F1Tenth-RL.git
+RUN cd F1Tenth-RL/ &&  git submodule init &&  git submodule update && \
+    source /opt/ros/galactic/setup.bash && \
+    pip3 install numpy scipy numba Pillow gym pyyaml pyglet shapely wandb pylint && \
+    pip install stable-baselines3 shimmy
+#  pip install gymnasium==0.28.1
+#  pip install numpy==1.23.5
+
     
 COPY config/joy_teleop.yaml /f1tenth_ws/install/f1tenth_stack/share/f1tenth_stack/config/joy_teleop.yaml
 COPY scripts/run.sh /
