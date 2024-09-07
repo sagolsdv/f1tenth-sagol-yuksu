@@ -88,13 +88,14 @@ RUN source /opt/ros/galactic/setup.bash && \
     cd /sagol_ws && \
 	rosdep install -i -y --from-paths src --rosdistro $ROS_DISTRO && \
     colcon build
+RUN pip install tensorflow blosc
 
 # FT-Autonomous
-RUN git clone https://github.com/FT-Autonomous/F1Tenth-RL.git
-RUN cd F1Tenth-RL/ &&  git submodule init &&  git submodule update && \
-    source /opt/ros/galactic/setup.bash && \
-    pip3 install numpy scipy numba Pillow gym pyyaml pyglet shapely wandb pylint && \
-    pip install stable-baselines3 shimmy
+#RUN git clone https://github.com/FT-Autonomous/F1Tenth-RL.git
+#RUN cd F1Tenth-RL/ &&  git submodule init &&  git submodule update && \
+#    source /opt/ros/galactic/setup.bash && \
+#    pip3 install numpy scipy numba Pillow gym pyyaml pyglet shapely wandb pylint && \
+#    pip install stable-baselines3 shimmy
 #  pip install gymnasium==0.28.1
 #  pip install numpy==1.23.5
 
