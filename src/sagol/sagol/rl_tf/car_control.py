@@ -126,6 +126,7 @@ class Drive(Node):
         if self.is_simulator:
             # position 1
             initpose = PoseWithCovarianceStamped()
+            '''
             initpose.pose.pose.position.x = 21.51589584350586
             initpose.pose.pose.position.y = 7.113001823425293
             initpose.pose.pose.position.z = 0.0
@@ -147,6 +148,26 @@ class Drive(Node):
             initpose.pose.pose.position.y = 47.93435287475586
             initpose.pose.pose.orientation.z = -0.011258415959253535
             initpose.pose.pose.orientation.w = 0.9999366220266604
+            '''
+
+            # position 1 in shanghai
+            initpose.pose.pose.position.x = 36.55048751831055
+            initpose.pose.pose.position.y = -12.759111404418945
+            initpose.pose.pose.orientation.z = -0.48088700042375426
+            initpose.pose.pose.orientation.w = 0.8767825801322949
+
+            # position 2 in shanghai
+            initpose.pose.pose.position.x = -44.2680778503418
+            initpose.pose.pose.position.y = 8.5191068649292
+            initpose.pose.pose.orientation.z = -0.42817192613476024
+            initpose.pose.pose.orientation.w = 0.9036972953760841
+
+            # position 3 in shanghai
+            initpose.pose.pose.position.x = 43.47073745727539
+            initpose.pose.pose.position.y = -14.217448234558105
+            initpose.pose.pose.orientation.z = 0.8841909693849728
+            initpose.pose.pose.orientation.w = 0.46712560372780054
+
             self.reset_publisher.publish(initpose)
 
 def main(args=None):

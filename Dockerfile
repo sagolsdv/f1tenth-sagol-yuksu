@@ -99,6 +99,8 @@ RUN pip install tensorflow blosc
 #  pip install gymnasium==0.28.1
 #  pip install numpy==1.23.5
 
+RUN cd / && git clone https://github.com/f1tenth/f1tenth_racetracks.git
+
     
 COPY config/joy_teleop.yaml /f1tenth_ws/install/f1tenth_stack/share/f1tenth_stack/config/joy_teleop.yaml
 COPY scripts/run.sh /
