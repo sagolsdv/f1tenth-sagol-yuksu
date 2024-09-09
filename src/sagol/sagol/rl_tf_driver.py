@@ -23,6 +23,8 @@ from rl_tf.gamepad import Gamepad
 
 parser = argparse.ArgumentParser()
 # real car or simulator
+parser.add_argument("--skip-learning", action='store_true', help="to set to skip learning")
+parser.add_argument("--autodrive", action='store_true', help="autodrive")
 parser.add_argument("--simulator", action='store_true', help="to set the use of the simulator")
 parser.add_argument("--use_back_sensors", action='store_true', help="to set the use of the simulator")
 # agent parameters
@@ -100,7 +102,7 @@ executor.add_node(environment.sensors)
 executor.add_node(environment.control)
 executor.add_node(environment.safety_control)
 print('spin')
-executor.spin_once(timeout_sec=1)
+executor.spin_once(timeout_sec=10)
 print('spin done')
 environment.reset_game()
 replay_memory = replay.ReplayMemory(base_output_dir, args)
@@ -327,8 +329,9 @@ def run_epoch(min_epoch_steps, eval_with_epsilon=None):
 #################################
 
 while not stop:
-    #avg_score = run_epoch(args.train_epoch_steps) # train
-    #print('Average epoch training score: %d' % (avg_score))
+    if not args.skip_learning:
+        avg_score = run_epoch(args.train_epoch_steps) # train
+        print('Average epoch training score: %d' % (avg_score))
     avg_score = run_epoch(args.eval_epoch_steps, eval_with_epsilon=0) # eval
     print('Average epoch eval score: %d' % (avg_score))
 dqn.save_network()

@@ -3,6 +3,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu
+from std_msgs.msg import Int32
 
 import time
 import math
@@ -10,7 +11,7 @@ import argparse
 import subprocess
 
 class Sensors(Node):
-    def __init__(self, is_simulator=False, use_back_sensors=False):
+    def __init__(self, is_simulator=False, use_back_sensors=False, is_autodrive=False):
         super().__init__('sensors_node')
         self.is_simulator = is_simulator
         self.use_back_sensors = use_back_sensors
@@ -21,9 +22,19 @@ class Sensors(Node):
             odom_topic = "/vesc/odom"
         else:
             odom_topic = "/odom"
-        self.lidar_subscriber = self.create_subscription(LaserScan, "/scan", self.lidar_callback, 10)
+        scan_topic = "/scan"
+        imu_topic = "/imu"
+        if is_autodrive:
+            scan_topic = "/autodrive/f1tenth_1/lidar"
+            imu_topic = "/autodrive/f1tenth_1/imu"
+        self.lidar_subscriber = self.create_subscription(LaserScan, scan_topic, self.lidar_callback, 10)
         self.odom_subscriber = self.create_subscription(Odometry, odom_topic, self.odometry_callback, 10)
-        self.imu_subscriber = self.create_subscription(Imu, "/imu", self.imu_callback, 10)
+        self.imu_subscriber = self.create_subscription(Imu, imu_topic, self.imu_callback, 10)
+        if is_autodrive:
+            topic = "/autodrive/f1tenth_1/collision_count"
+            self.collision_subscriber = self.create_subscription(Int32, topic, self.collision_callback, 10)
+            self.collision_count = 0
+            self.custom_collision_callback = None
 
         if not is_simulator:
             if use_back_sensors:
@@ -45,6 +56,15 @@ class Sensors(Node):
 
     def imu_callback(self, imu):
         self.imu = imu
+
+    def add_collision_callback(self, callback):
+        self.custom_collision_callback = callback
+
+    def collision_callback(self, count):
+        if self.collision_count > 0 and self.collision_count < count.data:
+            if self.custom_collision_callback:
+                self.custom_collision_callback(count.data)
+        self.collision_count = count.data
 
     def get_lidar_ranges(self):
         if not self.is_simulator:

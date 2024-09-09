@@ -21,12 +21,15 @@ ONLY_EXTERNAL_BARRIER = False
 EXTERNAL_BARRIER_THRESHOLD = 2.73
 
 class SafetyControl(Node):
-    def __init__(self, drive, sensors, is_simulator=False):
+    def __init__(self, drive, sensors, is_simulator=False, is_autodrive=False):
         super().__init__('safety_control_node')
         self.emergency_brake = False
         self.drive = drive
         self.sensors = sensors
-        self.sensors.add_lidar_callback(self.lidar_callback)
+        if is_autodrive:
+            self.sensors.add_collision_callback(self.collision_callback)
+        else:
+            self.sensors.add_lidar_callback(self.lidar_callback)
         self.safety = True
         if not is_simulator:
             self.ttc_treshold = TTC_THRESHOLD_REAL_CAR
@@ -36,6 +39,10 @@ class SafetyControl(Node):
             self.ttc_treshold = TTC_THRESHOLD_SIM
             self.euclidean_treshold = EUCLIDEAN_THRESHOLD_SIM
             self.use_ttc = USE_TTC_SIM
+
+    def collision_callback(self, count):
+        self.emergency_brake = True
+        self.drive.stop()
 
     def lidar_callback(self, lidar_data):
         if self.safety:

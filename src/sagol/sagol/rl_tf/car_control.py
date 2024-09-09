@@ -1,6 +1,8 @@
 import rclpy
 from rclpy.node import Node
 from ackermann_msgs.msg import AckermannDriveStamped
+from std_msgs.msg import Float32
+
 #from rclpy.exceptions import ROSException
 
 from threading import Thread
@@ -36,11 +38,20 @@ USE_RESET_INSTEAD_OF_BACKWARDS_SIM = True
 MIN_SPEED_REDUCTION = 5
 
 class Drive(Node):
-    def __init__(self, sensors, is_simulator=False):
+    def __init__(self, sensors, is_simulator=False, is_autodrive=False):
         super().__init__('drive_node')
         self.is_simulator = is_simulator
+        self.is_autodrive = is_autodrive
         if not is_simulator:
             topic = "/vesc/high_level/ackermann_cmd_mux/input/nav_0"
+            topic = "/drive"
+            if is_autodrive:
+                topic_throttle = "/autodrive/f1tenth_1/throttle_command"
+                topic_steering = "/autodrive/f1tenth_1/steering_command"
+                self.throttle_publisher = self.create_publisher(Float32, topic_throttle, 10)
+                self.steering_publisher = self.create_publisher(Float32, topic_steering, 10)
+                self.throttle_msg = Float32()
+                self.steering_msg = Float32()
             max_steering = 0.34
             self.max_speed_reduction = MAX_SPEED_REDUCTION
             self.steering_speed_reduction = STEERING_SPEED_REDUCTION
@@ -95,26 +106,40 @@ class Drive(Node):
     def send_drive_command(self, speed, steering_angle):
         self.last_angle = steering_angle
         self.last_speed = speed
-        ack_msg = AckermannDriveStamped()
-        ack_msg.drive.speed = float(speed)
-        ack_msg.drive.steering_angle = float(steering_angle)
-        self.ack_msg = ack_msg
+        if self.is_autodrive:
+            self.throttle_msg.data = float(speed) / 30
+            self.steering_msg.data = float(steering_angle)
+        else:
+            ack_msg = AckermannDriveStamped()
+            ack_msg.drive.speed = float(speed)
+            ack_msg.drive.steering_angle = float(steering_angle)
+            self.ack_msg = ack_msg
 
     def drive_command_runner(self):
         while rclpy.ok():
-            try:
-                self.drive_publisher.publish(self.ack_msg)
-            except:
-                if str(e) == "publish() to a closed topic":
-                    pass
-                else:
-                    raise e
+            if self.is_autodrive:
+                try:
+                    self.throttle_publisher.publish(self.throttle_msg)
+                    self.steering_publisher.publish(self.steering_msg)
+                except:
+                    if str(e) == "publish() to a closed topic":
+                        pass
+                    else:
+                        raise e
+            else:
+                try:
+                    self.drive_publisher.publish(self.ack_msg)
+                except:
+                    if str(e) == "publish() to a closed topic":
+                        pass
+                    else:
+                        raise e
             time.sleep(PUBLISHER_WAIT)
 
     def backward_until_obstacle(self):
         if USE_RESET_INSTEAD_OF_BACKWARDS_SIM and self.is_simulator:
             self.reset_simulator()
-        else:
+        elif not self.is_autodrive:
             self.backward()
             start = time.time()
             while not self.sensors.back_obstacle() and time.time() - start < self.backward_seconds:

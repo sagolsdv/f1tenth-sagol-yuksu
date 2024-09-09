@@ -28,9 +28,9 @@ class CarEnv(Node):
         self.history_length = args.history_length
         self.is_simulator = args.simulator
         self.add_velocity = args.add_velocity
-        self.sensors = Sensors(is_simulator=args.simulator, use_back_sensors=args.use_back_sensors)
-        self.control = Drive(self.sensors, is_simulator=args.simulator)
-        self.safety_control = SafetyControl(self.control, self.sensors, is_simulator=args.simulator)
+        self.sensors = Sensors(is_simulator=args.simulator, use_back_sensors=args.use_back_sensors, is_autodrive=args.autodrive)
+        self.control = Drive(self.sensors, is_simulator=args.simulator, is_autodrive=args.autodrive)
+        self.safety_control = SafetyControl(self.control, self.sensors, is_simulator=args.simulator, is_autodrive=args.autodrive)
         #time.sleep(4)
 
         # available actions
