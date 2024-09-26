@@ -23,6 +23,7 @@ setup(
             'sagolpublisher = sagol.sagolpublisher:main',
             'sagolsubscriber = sagol.sagolsubscriber:main',
             'wall_follow = sagol.wall_follow:main'
+            'sb3_driver = sagol.sb3_driver:main'
         ],
     },
 )

@@ -4,7 +4,13 @@ ENV ROS_DISTRO=foxy
 SHELL ["/bin/bash", "-c"]
 
 RUN apt update && apt-get -y install --no-install-recommends ros-foxy-ackermann-msgs
-RUN pip install tensorflow blosc
+RUN pip install blosc inputs
+RUN pip install tensorflow[and-cuda]
+
+# sb3
+RUN pip install gym
+RUN pip install stable-baselines3[extra]
+
 
 # sagol
 RUN mkdir -p /sagol_ws/src
