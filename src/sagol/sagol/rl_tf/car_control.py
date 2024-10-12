@@ -193,6 +193,11 @@ class Drive(Node):
             initpose.pose.pose.orientation.z = 0.8841909693849728
             initpose.pose.pose.orientation.w = 0.46712560372780054
 
+            initpose.pose.pose.position.x = -2.831418514251709
+            initpose.pose.pose.position.y = -0.7414035797119141
+            initpose.pose.pose.orientation.z = 0.10800853768286314
+            initpose.pose.pose.orientation.w = 0.9941499664475222
+
             self.reset_publisher.publish(initpose)
 
 def main(args=None):
