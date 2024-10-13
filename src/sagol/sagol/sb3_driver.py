@@ -29,19 +29,20 @@ from geometry_msgs.msg import PoseWithCovarianceStamped
 from tf2_msgs.msg import TFMessage
 from stable_baselines3.common.env_checker import check_env
 
-TTC_THRESHOLD_REAL_CAR = 0.35
+TTC_THRESHOLD_REAL_CAR = 0.37
 EUCLIDEAN_THRESHOLD_REAL_CAR = 0.35
 ONLY_EXTERNAL_BARRIER = False
 EXTERNAL_BARRIER_THRESHOLD = 2.73
 
 class SagolCar(Node):
-    def __init__(self):
+    def __init__(self, args):
         super().__init__('sagol_car')
         self.last_angle = 0.0
         self.last_speed = 0.0
-        self.max_speed = 1.0
+        self.max_speed = 5.0
         self.max_steering = 0.5236
         self.backward_speed = -1
+        self.cmd_args = args
 
         self.ttc_treshold = TTC_THRESHOLD_REAL_CAR
         self.euclidean_treshold = EUCLIDEAN_THRESHOLD_REAL_CAR
@@ -50,12 +51,15 @@ class SagolCar(Node):
         self.safety = True
         self.backward_seconds = 1.5
 
+        odom_channel =  '/odom'
+        lidar_channel =  '/scan'
+        if self.cmd_args.simulator:
+            odom_channel =  '/ego_racecar/odom'
 
         # Subscriptions
         self.subs_sensors = [
-            #('/imu', Imu),
-            ('/ego_racecar/odom', Odometry),
-            ('/scan', LaserScan),
+            (odom_channel, Odometry),
+            (lidar_channel, LaserScan),
         ]
 
         self.cache = {}
@@ -105,6 +109,26 @@ class SagolCar(Node):
         initpose.pose.pose.orientation.z = -0.9999683243274612
         initpose.pose.pose.orientation.w = 0.007959292790800734
 
+        initpose.pose.pose.position.x = -30.763614654541016
+        initpose.pose.pose.position.y = 19.61223030090332
+        initpose.pose.pose.orientation.z = -0.8867171226077097
+        initpose.pose.pose.orientation.w = 0.46231238840669603
+
+        initpose.pose.pose.position.x = -23.991741180419922
+        initpose.pose.pose.position.y = 48.246158599853516
+        initpose.pose.pose.orientation.z = -0.018419447098119764
+        initpose.pose.pose.orientation.w = 0.9998303475933302
+
+        initpose.pose.pose.position.x = -39.45703887939453
+        initpose.pose.pose.position.y = 37.38703155517578
+        initpose.pose.pose.orientation.z = 0.9866108256369013
+        initpose.pose.pose.orientation.w = 0.16309223996276426
+
+        initpose.pose.pose.position.x = -17.65467071533203
+        initpose.pose.pose.position.y = 48.15182113647461
+        initpose.pose.pose.orientation.z = -0.9999574565995246
+        initpose.pose.pose.orientation.w = 0.009224152590350474
+
         self.pubs['reset'].publish(initpose)
 
     def generic_callback_factory(self, topic):
@@ -117,8 +141,9 @@ class SagolCar(Node):
 
     def check_car_linear_velocity(self):
         msg = self.cache.get('/ego_racecar/odom', Odometry())
-        if msg.twist.twist.linear.x == 0 and msg.twist.twist.linear.x == 0:
+        if msg.twist.twist.linear.x == 0 and msg.twist.twist.linear.y == 0:
             return 0
+        #print(self.last_speed, msg.twist.twist.linear.x, msg.twist.twist.linear.y, math.sqrt(msg.twist.twist.linear.x ** 2 + msg.twist.twist.linear.y ** 2))
         return math.sqrt(msg.twist.twist.linear.x ** 2 + msg.twist.twist.linear.y ** 2)
 
     def get_lidar_range(self):
@@ -132,6 +157,7 @@ class SagolCar(Node):
         lidar_data = self.cache.get('/scan', LaserScan())
         if not lidar_data.ranges:
             return False
+        '''
         if acceleration > 0:
             for i in range(len(lidar_data.ranges)):
                 angle = lidar_data.angle_min + i * lidar_data.angle_increment
@@ -140,17 +166,20 @@ class SagolCar(Node):
                     ttc = lidar_data.ranges[i] / proj_velocity
                     if ttc < self.ttc_treshold and ttc >= 0:
                         self.collision_count += 1
+                        print("Emergency Brake 1", acceleration, ttc, self.ttc_treshold)
                         self.emergency_brake = True
                         break
+        '''
 
         if min(lidar_data.ranges) < self.euclidean_treshold:
+            #print("Emergency Brake 2", min(lidar_data.ranges) , self.euclidean_treshold)
             self.emergency_brake = True
 
         if ONLY_EXTERNAL_BARRIER and min(lidar_data.ranges) > EXTERNAL_BARRIER_THRESHOLD:
+            #print("Emergency Brake 3", ONLY_EXTERNAL_BARRIER, min(lidar_data.ranges), EXTERNAL_BARRIER_THRESHOLD)
             self.emergency_brake = True
 
         if self.emergency_brake:
-            self.collision_count += 1
             #print('emergency brake', self.collision_count)
             self.stop_drive()
         return self.emergency_brake
@@ -166,8 +195,9 @@ class SagolCar(Node):
 
     def backward_until_obstacle(self):
         #print('[backward until obstacle]')
-        self.reset_pose()
-        return
+        if self.cmd_args.simulator:
+            self.reset_pose()
+            return
         self.backward()
         start = time.time()
         while not self.check_back_obstacle() and time.time() - start < self.backward_seconds:
@@ -178,9 +208,6 @@ class SagolCar(Node):
 
     def enable_safety(self):
         self.safety = True
-
-    def get_collision_count(self):
-        return self.collision_count
 
     def get_scan_data(self):
         ranges = self.cache.get('/scan', LaserScan()).ranges
@@ -218,19 +245,24 @@ class SagolCar(Node):
         steering, speed = action
         reward = 0
         if abs(steering) < 0.1:
+            #print('steering < 0.1 reward += 0.08')
             reward += 0.08
         elif abs(steering) < 0.2:
+            #print('steering < 0.2 reward += 0.05')
             reward += 0.05
         elif abs(steering) < 0.3:
+            #print('steering < 0.3 reward += 0.03')
             reward += 0.05
         elif abs(steering) < 0.5:
+            #print('steering < 0.5 reward += 0.01')
             reward += 0.01
 
         speed += 1.0
         speed /= 2
         if speed < 0.1:
+            #print('speed < 0.1 -0.01 speed=', speed)
             reward -= 0.01
-        speed *= 5
+        speed *= self.max_speed
         self.send_drive_command(speed, steering)
         return reward
         '''
@@ -264,6 +296,9 @@ class SagolCar(Node):
         #    self.backward()
         return reward
         '''
+
+    def slow_forward(self):
+        self.send_drive_command(self.max_speed/5, 0.0)
 
     def forward(self):
         self.send_drive_command(self.max_speed, 0.0)
@@ -332,9 +367,10 @@ def convert_range(value, input_range, output_range):
     return (((value - in_min) * out_range) / in_range) + out_min
 
 class SagolSimEnv(gym.Env):
-    def __init__(self, sagol_car_node=None):
+    def __init__(self, args, sagol_car_node=None):
         super(SagolSimEnv, self).__init__()
         self.sagol_car_node = sagol_car_node
+        self.cmd_args = args
 
         # Define observation space
         self.pose = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(6,), dtype=np.float64)
@@ -359,6 +395,15 @@ class SagolSimEnv(gym.Env):
         self.lidar_max = 10
         self.stop_count = 0
 
+    def update_reward(self, delta, log="", show_log=False):
+        if show_log:
+            print("\033[37m")
+            print("update reward", delta, log)
+            print(f"   reward({self.reward}) + ({delta}) = {self.reward + delta}")
+            print(f"   last_speed({self.sagol_car_node.last_speed}) last_angle({self.sagol_car_node.last_angle}) stop_count({self.stop_count})")
+            print("\033[0m")
+        self.reward = self.reward + delta
+
     def process_state(self):
         data = self.sagol_car_node.get_reduced_scan_data()
         newstate = (data, self.sagol_car_node.check_car_linear_velocity())
@@ -374,10 +419,12 @@ class SagolSimEnv(gym.Env):
 
 
     def reset(self, seed=None):
-        print('reset called')
+        #print('reset called')
         self.process_state()
+        self.state_data = []
+        self.stop_count = 0
         self.reward = 0.0
-        self.collision_count = self.sagol_car_node.get_collision_count()
+        self.speed_checking_buffer = {}
 
         pose = np.zeros(6)
         acceleration = np.zeros(6)
@@ -394,14 +441,15 @@ class SagolSimEnv(gym.Env):
 
     def step(self, action):
         #print(f'[step called with action: {action} - start]', id(self))
-        self.reward += self.sagol_car_node.perform_action(action)
+        reward = self.sagol_car_node.perform_action(action)
+        self.update_reward(reward, f'reward from perform action {action}')
+        time.sleep(0.05) # wait for other sensing data to evaulate
+
         if self.sagol_car_node.emergency_brake:
             done = True
-            self.reward -= 1.0
-            print('collision detected, reward', self.reward)
+            self.update_reward(-1, 'minus from collision detection', True)
 
 
-            self.collision_count = self.sagol_car_node.get_collision_count()
             self.sagol_car_node.disable_safety()
             time.sleep(0.6)
             self.sagol_car_node.backward_until_obstacle()
@@ -409,20 +457,74 @@ class SagolSimEnv(gym.Env):
             self.sagol_car_node.enable_safety()
             self.sagol_car_node.unlock_brake()
             # if you select right/left from stop state, the real car turn the servo without moving..
-            self.sagol_car_node.forward()
+            self.sagol_car_node.slow_forward()
             time.sleep(0.4)
 
         else:
             done = False
 
-            self.reward += self.sagol_car_node.check_car_linear_velocity() * 0.3 * 0.09
-            self.reward += min(list(self.sagol_car_node.get_lidar_range())) * 0.01
+            #accel_reward = self.sagol_car_node.check_car_linear_velocity() * 0.3 * 0.20
+            #self.update_reward(accel_reward, 'accel reward')
 
-            if self.sagol_car_node.last_speed == 0:
+            now = time.time()
+            for constant_time in range(9, 3, -1):
+                count_time = []
+                avg_buffer = []
+                for t, speed in self.speed_checking_buffer.items():
+                    if now - t < constant_time:
+                        avg_buffer.append(speed)
+                        if int(t) not in count_time:
+                            count_time.append(int(t))
+
+                if len(avg_buffer) == 0:
+                    continue
+
+                if len(count_time) < constant_time:
+                    continue
+
+                avg_speed = sum(avg_buffer) / len(avg_buffer)
+
+                got_bonus = False
+                for expected_speed_percentage in range(100, 40, -10):
+                    expected_speed_norm = expected_speed_percentage / 100.0
+                    if avg_speed >= (self.sagol_car_node.max_speed * expected_speed_norm):
+                        bonus = expected_speed_norm * constant_time * 0.1
+                        if expected_speed_percentage <= 40:
+                            bonus = (100-expected_speed_norm) * constant_time * -0.1
+
+                        self.update_reward(bonus, f'by constant speed over {expected_speed_percentage}% of max speed for {constant_time}s', True)
+                        got_bonus = True
+                        break
+                if got_bonus:
+                    break
+
+            cleanup_target = []
+            for t, speed in self.speed_checking_buffer.items():
+                if now - t > 10:
+                    cleanup_target.append(t)
+
+            for t in cleanup_target:
+                self.speed_checking_buffer.pop(t)
+
+
+            self.speed_checking_buffer[time.time()] = self.sagol_car_node.last_speed
+            space_reward = min(list(self.sagol_car_node.get_lidar_range())) * 0.01
+            self.update_reward(space_reward, 'space reward')
+
+            if self.sagol_car_node.last_speed <= 0.05:
                 self.stop_count += 1
+                #print("stop detected", self.sagol_car_node.last_speed, self.stop_count)
                 if self.stop_count > 10:
-                    done = True
-                    self.reward -= 2.0
+                    #done = True
+                    self.update_reward(-1, 'minus by too long time stop', True)
+                    self.sagol_car_node.slow_forward()
+                    self.stop_count = 0
+            else:
+                self.stop_count = 0
+
+            if self.reward < -10:
+                print("stopped for too long time, so reset")
+                done = True
 
         pose = np.zeros(6)
         acceleration = np.zeros(6)
@@ -451,10 +553,10 @@ class SagolSimEnv(gym.Env):
 #    entry_point=SagolSimEnv,
 #)
 
-def train_and_evaluate(sagol_car_node, model_file=None):
+def train_and_evaluate(args, sagol_car_node, model_file=None):
     # Create the environment
     #env = gym.make('SagolSim-v0', sagol_car_node=sagol_car_node)
-    env = SagolSimEnv(sagol_car_node)
+    env = SagolSimEnv(args, sagol_car_node)
 
     # it will check your custom environment and output additional warnings if needed
     check_env(env)
@@ -483,12 +585,12 @@ def train_and_evaluate(sagol_car_node, model_file=None):
     if model_file:
         print('load', model_file)
         model = PPO.load(model_file, env=env, device=device)
-    print(dir(model))
-    print(help(model.load))
-    print(help(PPO))
+    #print(dir(model))
+    #print(help(model.load))
+    #print(help(PPO))
 
     # Train the agent
-    model.learn(total_timesteps=200000,
+    model.learn(total_timesteps=20000,
                 callback=checkpoint_callback,
                 progress_bar=False)
 
@@ -509,10 +611,10 @@ def train_and_evaluate(sagol_car_node, model_file=None):
 
     env.close()
 
-def evaluate(sagol_car_node, model):
+def evaluate(args, sagol_car_node, model):
     # Create the environment
     #env = gym.make('SagolSim-v0', sagol_car_node=sagol_car_node)
-    env = SagolSimEnv(sagol_car_node)
+    env = SagolSimEnv(args, sagol_car_node)
 
     # Instantiate the agent with the specified device
     print(f"loading model: {model}")
@@ -522,7 +624,7 @@ def evaluate(sagol_car_node, model):
 
     while True:
         action, _states = model.predict(obs, state, deterministic=True)
-        print(action, _states)
+        #print(action, _states)
         if len(action)==1:
             action = action[0]
         obs, rewards, dones, truncated, _state = env.step(action)
@@ -536,8 +638,15 @@ def main():
     parser = argparse.ArgumentParser(description='SagolCar ROS2 Node')
     parser.add_argument('-d', '--debug', action='store_true', help='Enable debug logging')
     parser.add_argument('-l', '--load', help='load model')
-    parser.add_argument('mode', default="train", help='mode (train or evaluate)')
+    parser.add_argument('mode', default="training", help='mode (training or eval)')
     args = parser.parse_args()
+
+    args.simulator = False
+    import subprocess
+    if "/ego_racecar/odom" in subprocess.check_output("ros2 topic list",
+        stderr=subprocess.STDOUT,
+        shell=True).decode("utf-8").split("\n"):
+        args.simulator = True
 
     # Initialize ROS 2
     rclpy.init()
@@ -547,20 +656,20 @@ def main():
        rclpy.logging.set_logger_level('sagol_car', rclpy.logging.LoggingSeverity.DEBUG)
 
     # Create the SagolCar node
-    sagol_car_node = SagolCar()
+    sagol_car_node = SagolCar(args)
 
     # Start the training and evaluation in a separate thread
     def start_training(model):
         print("Training thread start")
-        train_thread = Thread(target=train_and_evaluate, args=(sagol_car_node, model))
+        train_thread = Thread(target=train_and_evaluate, args=(args, sagol_car_node, model))
         train_thread.start()
 
     def evaluate_model(model):
         print("Evaluation thread start")
-        train_thread = Thread(target=evaluate, args=(sagol_car_node, model))
+        train_thread = Thread(target=evaluate, args=(args, sagol_car_node, model))
         train_thread.start()
 
-    if args.mode == "evaluate":
+    if args.mode == "eval":
         sagol_car_node.single_shot(1.0, evaluate_model, args.load)
     else:
         sagol_car_node.single_shot(1.0, start_training, args.load)

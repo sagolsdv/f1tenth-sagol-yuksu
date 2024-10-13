@@ -89,6 +89,7 @@ RUN source /opt/ros/galactic/setup.bash && \
 	rosdep install -i -y --from-paths src --rosdistro $ROS_DISTRO && \
     colcon build
 RUN pip install tensorflow blosc
+RUN pip gpiod
 
 # FT-Autonomous
 #RUN git clone https://github.com/FT-Autonomous/F1Tenth-RL.git
