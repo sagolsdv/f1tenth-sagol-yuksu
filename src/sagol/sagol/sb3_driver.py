@@ -133,6 +133,11 @@ class SagolCar(Node):
         initpose.pose.pose.orientation.z = -0.9999574565995246
         initpose.pose.pose.orientation.w = 0.009224152590350474
 
+        initpose.pose.pose.position.x = 13.299171447753906
+        initpose.pose.pose.position.y = 25.553592681884766
+        initpose.pose.pose.orientation.z = -0.999979363603154
+        initpose.pose.pose.orientation.w = 0.0064243573866474635
+
         self.pubs['reset'].publish(initpose)
 
     def generic_callback_factory(self, topic):
