@@ -39,7 +39,8 @@ class SagolCar(Node):
         super().__init__('sagol_car')
         self.last_angle = 0.0
         self.last_speed = 0.0
-        self.backward_speed = -1
+        self.backward_speed = -0.5
+        self.backward_seconds = 0.7
         self.max_speed = 3.0
         self.max_steering = 0.265
         self.cmd_args = args
@@ -212,17 +213,21 @@ class SagolCar(Node):
         self.infrared_line.request(config)
 
     def check_back_obstacle(self):
-        return self.infrared_line.get_value()==1
+        has_obstacle = self.infrared_line.get_value()==1
+        if has_obstacle:
+            print(f"back obstracle detected")
+        return has_obstacle
 
     def backward_until_obstacle(self):
         #print('[backward until obstacle]')
         if self.cmd_args.simulator:
             self.reset_pose()
             return
-        self.backward()
-        start = time.time()
-        while not self.check_back_obstacle() and time.time() - start < self.backward_seconds:
-            time.sleep(0.01)
+        if not self.check_back_obstacle():
+            self.backward()
+            start = time.time()
+            while not self.check_back_obstacle() and time.time() - start < self.backward_seconds:
+                time.sleep(0.01)
         self.stop_drive()
         time.sleep(0.1)
         #print('[backward until obstacle done]')
