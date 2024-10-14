@@ -39,10 +39,14 @@ class SagolCar(Node):
         super().__init__('sagol_car')
         self.last_angle = 0.0
         self.last_speed = 0.0
-        self.max_speed = 5.0
-        self.max_steering = 0.5236
         self.backward_speed = -1
+        self.max_speed = 3.0
+        self.max_steering = 0.265
         self.cmd_args = args
+        if not self.cmd_args.simulator:
+            self.max_speed = 3.0
+            self.max_steering = 0.265
+            self.setup_back_obstacle_detection_sensor()
 
         self.ttc_treshold = TTC_THRESHOLD_REAL_CAR
         self.euclidean_treshold = EUCLIDEAN_THRESHOLD_REAL_CAR
@@ -147,7 +151,7 @@ class SagolCar(Node):
         return math.sqrt(msg.twist.twist.linear.x ** 2 + msg.twist.twist.linear.y ** 2)
 
     def get_lidar_range(self):
-        return self.cache.get('/scan', LaserScan()).ranges
+        return self.cache.get('/scan', LaserScan()).ranges[:1080]
 
     def check_emergency_brake(self, msg):
         if not self.safety:
@@ -155,11 +159,12 @@ class SagolCar(Node):
 
         acceleration = self.check_car_linear_velocity()
         lidar_data = self.cache.get('/scan', LaserScan())
-        if not lidar_data.ranges:
+        lidar_ranges = self.cache.get('/scan', LaserScan()).ranges[:1080]
+        if not lidar_ranges:
             return False
         '''
         if acceleration > 0:
-            for i in range(len(lidar_data.ranges)):
+            for i in range(len(lidar_ranges)):
                 angle = lidar_data.angle_min + i * lidar_data.angle_increment
                 proj_velocity = acceleration * math.cos(angle)
                 if proj_velocity != 0:
@@ -171,12 +176,12 @@ class SagolCar(Node):
                         break
         '''
 
-        if min(lidar_data.ranges) < self.euclidean_treshold:
-            #print("Emergency Brake 2", min(lidar_data.ranges) , self.euclidean_treshold)
+        if min(lidar_ranges) < self.euclidean_treshold:
+            #print("Emergency Brake 2", min(lidar_ranges) , self.euclidean_treshold)
             self.emergency_brake = True
 
-        if ONLY_EXTERNAL_BARRIER and min(lidar_data.ranges) > EXTERNAL_BARRIER_THRESHOLD:
-            #print("Emergency Brake 3", ONLY_EXTERNAL_BARRIER, min(lidar_data.ranges), EXTERNAL_BARRIER_THRESHOLD)
+        if ONLY_EXTERNAL_BARRIER and min(lidar_ranges) > EXTERNAL_BARRIER_THRESHOLD:
+            #print("Emergency Brake 3", ONLY_EXTERNAL_BARRIER, min(lidar_ranges), EXTERNAL_BARRIER_THRESHOLD)
             self.emergency_brake = True
 
         if self.emergency_brake:
@@ -190,8 +195,18 @@ class SagolCar(Node):
     def unlock_brake(self):
         self.emergency_brake = False
 
+    def setup_back_obstacle_detection_sensor(self):
+        import gpiod
+        chip = gpiod.chip('gpiochip4')
+        PIN = 23
+        self.infrared_line = chip.get_line(PIN)
+        config = gpiod.line_request()
+        config.consumer = "distance"
+        config.request_type = gpiod.line_request.DIRECTION_INPUT
+        self.infrared_line.request(config)
+
     def check_back_obstacle(self):
-        return False
+        return self.infrared_line.get_value()==1
 
     def backward_until_obstacle(self):
         #print('[backward until obstacle]')
@@ -210,7 +225,7 @@ class SagolCar(Node):
         self.safety = True
 
     def get_scan_data(self):
-        ranges = self.cache.get('/scan', LaserScan()).ranges
+        ranges = self.cache.get('/scan', LaserScan()).ranges[:1080]
         return np.array(ranges)
 
     def get_reduced_scan_data(self):
@@ -235,13 +250,14 @@ class SagolCar(Node):
 
     def publish_drive(self, speed, steering_angle):
         ack_msg = AckermannDriveStamped()
+        adjusted_speed = speed * self.max_speed
+        adjusted_steering = steering_angle * self.max_steering
         ack_msg.drive.speed = float(speed)
         ack_msg.drive.steering_angle = float(steering_angle)
         self.pubs['drive'].publish(ack_msg)
-        #self.get_logger().info(f'Drive command published: {speed}, {steering_angle}')
+        self.get_logger().info(f'Drive command published: {speed}, {steering_angle} -> {adjusted_speed}, {adjusted_steering}')
 
     def perform_action(self, action):
-        #print(action)
         steering, speed = action
         reward = 0
         if abs(steering) < 0.1:
@@ -262,7 +278,6 @@ class SagolCar(Node):
         if speed < 0.1:
             #print('speed < 0.1 -0.01 speed=', speed)
             reward -= 0.01
-        speed *= self.max_speed
         self.send_drive_command(speed, steering)
         return reward
         '''
@@ -508,16 +523,17 @@ class SagolSimEnv(gym.Env):
 
 
             self.speed_checking_buffer[time.time()] = self.sagol_car_node.last_speed
-            space_reward = min(list(self.sagol_car_node.get_lidar_range())) * 0.01
-            self.update_reward(space_reward, 'space reward')
+            if len(self.sagol_car_node.get_lidar_range()) > 0:
+                space_reward = min(list(self.sagol_car_node.get_lidar_range())) * 0.01
+                self.update_reward(space_reward, 'space reward')
 
             if self.sagol_car_node.last_speed <= 0.05:
                 self.stop_count += 1
                 #print("stop detected", self.sagol_car_node.last_speed, self.stop_count)
                 if self.stop_count > 10:
-                    #done = True
+                    done = True
                     self.update_reward(-1, 'minus by too long time stop', True)
-                    self.sagol_car_node.slow_forward()
+                    self.sagol_car_node.forward()
                     self.stop_count = 0
             else:
                 self.stop_count = 0

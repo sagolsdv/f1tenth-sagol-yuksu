@@ -9,4 +9,7 @@ source /opt/ros/$ROS_DISTRO/setup.bash
 source /sagol_ws/install/setup.bash
 
 cd /sagol_ws
-ros2 run sagol wall_follow
+export LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libgomp.so.1
+#ros2 run sagol wall_follow
+cd src/sagol/sagol
+python3 sb3_driver.py $@

@@ -20,9 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'sagolpublisher = sagol.sagolpublisher:main',
-            'sagolsubscriber = sagol.sagolsubscriber:main',
-            'wall_follow = sagol.wall_follow:main'
+            'wall_follow = sagol.wall_follow:main',
             'sb3_driver = sagol.sb3_driver:main'
         ],
     },
