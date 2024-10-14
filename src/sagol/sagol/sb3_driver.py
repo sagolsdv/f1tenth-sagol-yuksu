@@ -500,11 +500,11 @@ class SagolSimEnv(gym.Env):
                 avg_speed = sum(avg_buffer) / len(avg_buffer)
 
                 got_bonus = False
-                for expected_speed_percentage in range(100, 40, -10):
+                for expected_speed_percentage in range(100, 30, -10):
                     expected_speed_norm = expected_speed_percentage / 100.0
                     if avg_speed >= (self.sagol_car_node.max_speed * expected_speed_norm):
                         bonus = expected_speed_norm * constant_time * 0.1
-                        if expected_speed_percentage <= 40:
+                        if expected_speed_percentage <= 30:
                             bonus = (100-expected_speed_norm) * constant_time * -0.1
 
                         self.update_reward(bonus, f'by constant speed over {expected_speed_percentage}% of max speed for {constant_time}s', True)
