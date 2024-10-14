@@ -128,15 +128,16 @@ class SagolCar(Node):
         initpose.pose.pose.orientation.z = 0.9866108256369013
         initpose.pose.pose.orientation.w = 0.16309223996276426
 
-        initpose.pose.pose.position.x = -17.65467071533203
-        initpose.pose.pose.position.y = 48.15182113647461
-        initpose.pose.pose.orientation.z = -0.9999574565995246
-        initpose.pose.pose.orientation.w = 0.009224152590350474
-
         initpose.pose.pose.position.x = 13.299171447753906
         initpose.pose.pose.position.y = 25.553592681884766
         initpose.pose.pose.orientation.z = -0.999979363603154
         initpose.pose.pose.orientation.w = 0.0064243573866474635
+
+        # strait forward course
+        initpose.pose.pose.position.x = -17.65467071533203
+        initpose.pose.pose.position.y = 48.15182113647461
+        initpose.pose.pose.orientation.z = -0.9999574565995246
+        initpose.pose.pose.orientation.w = 0.009224152590350474
 
         self.pubs['reset'].publish(initpose)
 
@@ -260,7 +261,7 @@ class SagolCar(Node):
         ack_msg.drive.speed = float(speed)
         ack_msg.drive.steering_angle = float(steering_angle)
         self.pubs['drive'].publish(ack_msg)
-        self.get_logger().info(f'Drive command published: {speed}, {steering_angle} -> {adjusted_speed}, {adjusted_steering}')
+        #self.get_logger().info(f'Drive command published: {speed}, {steering_angle} -> {adjusted_speed}, {adjusted_steering}')
 
     def perform_action(self, action):
         steering, speed = action
