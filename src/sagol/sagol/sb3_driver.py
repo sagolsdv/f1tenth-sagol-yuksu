@@ -52,7 +52,7 @@ class SagolCar(Node):
         self.euclidean_treshold = EUCLIDEAN_THRESHOLD_REAL_CAR
         self.emergency_brake = False
         self.collision_count = 0
-        self.safety = True
+        self.safety = not self.cmd_args.no_safety
         self.backward_seconds = 1.5
 
         odom_channel =  '/odom'
@@ -464,7 +464,7 @@ class SagolSimEnv(gym.Env):
         #print(f'[step called with action: {action} - start]', id(self))
         reward = self.sagol_car_node.perform_action(action)
         self.update_reward(reward, f'reward from perform action {action}')
-        time.sleep(0.05) # wait for other sensing data to evaulate
+        time.sleep(0.15) # wait for other sensing data to evaulate
 
         if self.sagol_car_node.emergency_brake:
             done = True
@@ -612,7 +612,7 @@ def train_and_evaluate(args, sagol_car_node, model_file=None):
     #print(help(PPO))
 
     # Train the agent
-    model.learn(total_timesteps=20000,
+    model.learn(total_timesteps=args.learning_count,
                 callback=checkpoint_callback,
                 progress_bar=False)
 
@@ -660,6 +660,8 @@ def main():
     parser = argparse.ArgumentParser(description='SagolCar ROS2 Node')
     parser.add_argument('-d', '--debug', action='store_true', help='Enable debug logging')
     parser.add_argument('-l', '--load', help='load model')
+    parser.add_argument('--no-safety', action='store_true', help='Disable safety features')
+    parser.add_argument('--learning-count', default=20000, type=int, help='set learning count ')
     parser.add_argument('mode', default="training", help='mode (training or eval)')
     args = parser.parse_args()
 
