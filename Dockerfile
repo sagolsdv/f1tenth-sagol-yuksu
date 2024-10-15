@@ -122,4 +122,5 @@ COPY scripts/run-*.sh /
 
 WORKDIR '/'
 #ENTRYPOINT ["/bin/bash"]
-ENTRYPOINT ["/run-all.sh"]
+#ENTRYPOINT ["/run-all.sh"]
+ENTRYPOINT ./run-all.sh
