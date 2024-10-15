@@ -119,7 +119,6 @@ COPY config/joy_teleop.yaml /f1tenth_ws/install/f1tenth_stack/share/f1tenth_stac
 COPY scripts/run.sh /
 COPY scripts/run-mouse.sh /
 COPY scripts/run-*.sh /
-COPY scripts/*.py /
 
 WORKDIR '/'
 ENTRYPOINT ["/bin/bash"]

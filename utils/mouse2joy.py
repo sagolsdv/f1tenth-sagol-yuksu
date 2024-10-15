@@ -1,5 +1,4 @@
 import evdev
-import uinput
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Joy
@@ -12,9 +11,6 @@ for device in devices:
    if device.name == "Logitech MX Master 2S":
        found_path = device.path
        break
-events = (
-    uinput.BTN_JOYSTICK,
-)
 
 class VirtualJoytick(Node):
     def __init__(self):
