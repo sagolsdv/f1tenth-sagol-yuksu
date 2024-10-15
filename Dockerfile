@@ -121,4 +121,5 @@ COPY scripts/run-mouse.sh /
 COPY scripts/run-*.sh /
 
 WORKDIR '/'
-ENTRYPOINT ["/bin/bash"]
+#ENTRYPOINT ["/bin/bash"]
+ENTRYPOINT ["/run-all.sh"]
