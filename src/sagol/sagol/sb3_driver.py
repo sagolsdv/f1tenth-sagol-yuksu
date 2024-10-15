@@ -41,11 +41,11 @@ class SagolCar(Node):
         self.last_speed = 0.0
         self.backward_speed = -0.5
         self.backward_seconds = 0.7
-        self.max_speed = 3.0
+        self.max_speed = 4.0
         self.max_steering = 0.265
         self.cmd_args = args
         if not self.cmd_args.simulator:
-            self.max_speed = 3.0
+            self.max_speed = 4.0
             self.max_steering = 0.265
             self.setup_back_obstacle_detection_sensor()
 
@@ -263,8 +263,8 @@ class SagolCar(Node):
         ack_msg = AckermannDriveStamped()
         adjusted_speed = speed * self.max_speed
         adjusted_steering = steering_angle * self.max_steering
-        ack_msg.drive.speed = float(speed)
-        ack_msg.drive.steering_angle = float(steering_angle)
+        ack_msg.drive.speed = float(adjusted_speed)
+        ack_msg.drive.steering_angle = float(adjusted_steering)
         self.pubs['drive'].publish(ack_msg)
         #self.get_logger().info(f'Drive command published: {speed}, {steering_angle} -> {adjusted_speed}, {adjusted_steering}')
 
@@ -513,12 +513,13 @@ class SagolSimEnv(gym.Env):
                 got_bonus = False
                 for expected_speed_percentage in range(100, 30, -10):
                     expected_speed_norm = expected_speed_percentage / 100.0
-                    if avg_speed >= (self.sagol_car_node.max_speed * expected_speed_norm):
+                    if avg_speed >= expected_speed_norm:
                         bonus = expected_speed_norm * constant_time * 0.1
                         if expected_speed_percentage <= 30:
                             bonus = (100-expected_speed_norm) * constant_time * -0.1
 
                         self.update_reward(bonus, f'by constant speed over {expected_speed_percentage}% of max speed for {constant_time}s', True)
+                        #print(f"avg_speed {avg_speed} for {constant_time}s")
                         got_bonus = True
                         break
                 if got_bonus:
