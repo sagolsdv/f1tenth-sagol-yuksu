@@ -119,26 +119,36 @@ class SagolCar(Node):
         initpose.pose.pose.orientation.z = -0.8867171226077097
         initpose.pose.pose.orientation.w = 0.46231238840669603
 
-        initpose.pose.pose.position.x = -23.991741180419922
-        initpose.pose.pose.position.y = 48.246158599853516
-        initpose.pose.pose.orientation.z = -0.018419447098119764
-        initpose.pose.pose.orientation.w = 0.9998303475933302
-
-        initpose.pose.pose.position.x = -39.45703887939453
-        initpose.pose.pose.position.y = 37.38703155517578
-        initpose.pose.pose.orientation.z = 0.9866108256369013
-        initpose.pose.pose.orientation.w = 0.16309223996276426
-
-        initpose.pose.pose.position.x = 13.299171447753906
-        initpose.pose.pose.position.y = 25.553592681884766
-        initpose.pose.pose.orientation.z = -0.999979363603154
-        initpose.pose.pose.orientation.w = 0.0064243573866474635
-
         # strait forward course
         initpose.pose.pose.position.x = -17.65467071533203
         initpose.pose.pose.position.y = 48.15182113647461
         initpose.pose.pose.orientation.z = -0.9999574565995246
         initpose.pose.pose.orientation.w = 0.009224152590350474
+
+        # left curve and left
+        initpose.pose.pose.position.x = -39.45703887939453
+        initpose.pose.pose.position.y = 37.38703155517578
+        initpose.pose.pose.orientation.z = 0.9866108256369013
+        initpose.pose.pose.orientation.w = 0.16309223996276426
+
+        # right and right
+        initpose.pose.pose.position.x = -30.763614654541016
+        initpose.pose.pose.position.y = 19.61223030090332
+        initpose.pose.pose.orientation.z = -0.8867171226077097
+        initpose.pose.pose.orientation.w = 0.46231238840669603
+
+        # 180 turn left
+        initpose.pose.pose.position.x = -66.57514953613281
+        initpose.pose.pose.position.y = 53.80522918701172
+        initpose.pose.pose.orientation.z = 0.9999963866595275
+        initpose.pose.pose.orientation.w = 0.0026882462477554763
+
+        # iros2024
+        initpose.pose.pose.position.x = -10.156763076782227
+        initpose.pose.pose.position.y = 7.7093915939331055
+        initpose.pose.pose.orientation.z = -0.7289135523586648
+        initpose.pose.pose.orientation.w = 0.6846057501860995
+
 
         self.pubs['reset'].publish(initpose)
 
