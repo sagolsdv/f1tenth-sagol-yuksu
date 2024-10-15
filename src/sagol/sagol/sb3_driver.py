@@ -40,12 +40,12 @@ class SagolCar(Node):
         self.last_angle = 0.0
         self.last_speed = 0.0
         self.backward_speed = -0.5
+        self.slow_forward_speed = 0.5
         self.backward_seconds = 0.7
-        self.max_speed = 4.0
-        self.max_steering = 0.265
         self.cmd_args = args
+        self.max_speed = self.cmd_args.max_speed # 4.0
+        self.max_steering = 0.265
         if not self.cmd_args.simulator:
-            self.max_speed = 4.0
             self.max_steering = 0.265
             self.setup_back_obstacle_detection_sensor()
 
@@ -324,7 +324,7 @@ class SagolCar(Node):
         '''
 
     def slow_forward(self):
-        self.send_drive_command(self.max_speed/5, 0.0)
+        self.send_drive_command(slow_forward_speed, 0.0)
 
     def forward(self):
         self.send_drive_command(self.max_speed, 0.0)
@@ -668,6 +668,7 @@ def main():
     parser.add_argument('-l', '--load', help='load model')
     parser.add_argument('--no-safety', action='store_true', help='Disable safety features')
     parser.add_argument('--learning-count', default=20000, type=int, help='set learning count ')
+    parser.add_argument('--max-speed', default=4.0, type=float,  help='max speed (default 4.0)')
     parser.add_argument('mode', default="training", help='mode (training or eval)')
     args = parser.parse_args()
 

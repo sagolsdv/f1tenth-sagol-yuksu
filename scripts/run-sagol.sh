@@ -12,4 +12,4 @@ cd /sagol_ws
 export LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libgomp.so.1
 #ros2 run sagol wall_follow
 cd src/sagol/sagol
-python3 sb3_driver.py $@
+python3 sb3_driver.py --load saved_models/best.zip --no-safety eval $@

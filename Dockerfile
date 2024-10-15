@@ -82,18 +82,26 @@ RUN cd / && mkdir -p sim_ws/src && \
     colcon build
 
 # sagol
-RUN mkdir -p /sagol_ws/src
-COPY src /sagol_ws/src
-RUN source /opt/ros/galactic/setup.bash && \
-    cd /sagol_ws && \
-	rosdep install -i -y --from-paths src --rosdistro $ROS_DISTRO && \
-    colcon build
 RUN pip install tensorflow blosc
 RUN pip install gpiod
 RUN pip install gymnasium shimmy
 #RUN pip install stable_baselines3[extra]
 RUN pip install stable_baselines3
 RUN pip install numpy==1.23.1
+RUN pip install evdev
+RUN apt-get install -y screen
+
+RUN mkdir -p /sagol_ws/src
+COPY src /sagol_ws/src
+RUN source /opt/ros/galactic/setup.bash && \
+    cd /sagol_ws && \
+	rosdep install -i -y --from-paths src --rosdistro $ROS_DISTRO && \
+    colcon build
+
+RUN mkdir -p /sagol_ws/utils
+COPY utils /sagol_ws/utils
+COPY utils/keep-hokuyo-ip.py /sagol_ws/utils/
+COPY utils/mouse2joy.py /sagol_ws/utils/
 
 # FT-Autonomous
 #RUN git clone https://github.com/FT-Autonomous/F1Tenth-RL.git
@@ -109,7 +117,9 @@ RUN cd / && git clone https://github.com/f1tenth/f1tenth_racetracks.git
     
 COPY config/joy_teleop.yaml /f1tenth_ws/install/f1tenth_stack/share/f1tenth_stack/config/joy_teleop.yaml
 COPY scripts/run.sh /
+COPY scripts/run-mouse.sh /
 COPY scripts/run-*.sh /
+COPY scripts/*.py /
 
 WORKDIR '/'
 ENTRYPOINT ["/bin/bash"]
