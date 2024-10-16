@@ -112,7 +112,7 @@ COPY utils/mouse2joy.py /sagol_ws/utils/
 #  pip install gymnasium==0.28.1
 #  pip install numpy==1.23.5
 
-RUN cd / && git clone https://github.com/f1tenth/f1tenth_racetracks.git
+#RUN cd / && git clone https://github.com/f1tenth/f1tenth_racetracks.git
 
     
 COPY config/joy_teleop.yaml /f1tenth_ws/install/f1tenth_stack/share/f1tenth_stack/config/joy_teleop.yaml

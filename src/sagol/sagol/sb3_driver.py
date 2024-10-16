@@ -334,7 +334,7 @@ class SagolCar(Node):
         '''
 
     def slow_forward(self):
-        self.send_drive_command(slow_forward_speed, 0.0)
+        self.send_drive_command(self.slow_forward_speed, 0.0)
 
     def forward(self):
         self.send_drive_command(self.max_speed, 0.0)
