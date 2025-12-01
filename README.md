@@ -40,7 +40,54 @@ This repository serves as an archive of our work, and the **Sagol Yuksu** projec
 ```bash
 % echo 'KERNEL=="ttyACM[0-9]*", ACTION=="add", ATTRS{idVendor}=="15d1", MODE="0666", GROUP="dialout", SYMLINK+="sensors/hokuyo"' > /etc/udev/rules.d/99-hokuyo.rules
 % echo 'KERNEL=="ttyACM[0-9]*", ACTION=="add", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", MODE="0666", GROUP="dialout", SYMLINK+="sensors/vesc"' > /etc/udev/rules.d/99-vesc.rules
-% # exec run-container.sh at boot time by using systemctl or crontab
+# exec run-container.sh at boot time by using systemctl or crontab
+# But you don't have a model to use for autonomous driving yet in
+# /sagol_ws/src/sagol/sagol/saved_models/best.zip
+# Please follow the next chapter to build a model by sb_driver.py.
 ```
 
-### Training model
+### Training model on PC
+
+1. Run container on Terminal 1
+
+This script runs sagol:base with enabling X.org connectivity from the container
+
+```bash
+% ./run-container.sh 
+```
+
+2. Run bash of container on Terminal 2 and kill all processes
+
+The container supopse to run on the target device. In order to use the container for the training mode, it needs to kill the screen sessions for - f1tenth, hokuyo, mouse and sagol.
+
+```bash
+% ./join.py # or sudo docker exec -it sagoldev /bin/bash
+% pkill screen
+```
+
+3. run f1tenth-gym with iros2024 track on Terminal 2
+
+Now you'll run f1tenth gym environment for ROS. You'll want to use simulated track of IROS2024 competition. Edit sim.yaml and start gym.
+
+```bash
+% vi /sim_ws/install/f1tenth_gym_ros/share/f1tenth_gym_ros/config/sim.yaml
+# modify map_path 
+#    from map_path: '/sim_ws/src/f1tenth_gym_ros/maps/levine'
+#    to   map_path: '/sagol_ws/src/maps/iros2024'
+# and :wq
+
+% ./run-gym.sh
+```
+
+The rviz2 GUI will be shown with the IROS2024 track. Click "2D Pose Estimate" button on toolbar and click on map to reset the ego car position.
+
+4. Run bash of container on Terminal 3 to run sb3_driver.py for training mode
+
+```bash
+% ROS_DISTRO=galactic
+% source /opt/ros/$ROS_DISTRO/setup.bash
+% source /sagol_ws/install/setup.bash
+% cd sagol_ws/src/sagol/sagol/
+% python3 sb3_driver.py training
+```
+Save your best model into 'saved_models/best.zip'. This inference model will be used by run-sago.sh in your target HW.
