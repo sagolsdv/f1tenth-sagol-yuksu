@@ -40,11 +40,11 @@ This repository serves as an archive of our work, and the **Sagol Yuksu** projec
 ```bash
 % echo 'KERNEL=="ttyACM[0-9]*", ACTION=="add", ATTRS{idVendor}=="15d1", MODE="0666", GROUP="dialout", SYMLINK+="sensors/hokuyo"' > /etc/udev/rules.d/99-hokuyo.rules
 % echo 'KERNEL=="ttyACM[0-9]*", ACTION=="add", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", MODE="0666", GROUP="dialout", SYMLINK+="sensors/vesc"' > /etc/udev/rules.d/99-vesc.rules
-# exec run-container.sh at boot time by using systemctl or crontab
-# But you don't have a model to use for autonomous driving yet in
-# /sagol_ws/src/sagol/sagol/saved_models/best.zip
-# Please follow the next chapter to build a model by sb_driver.py.
 ```
+
+Then, You need to execute run-container.sh at the boot time by using systemctl or `crontab -e`.
+
+NOTE: You don't have a model to use for autonomous driving yet in `/sagol_ws/src/sagol/sagol/saved_models/best.zip`.  Please follow the next chapter to build a model by `sb_driver.py`.
 
 ### Training model on PC
 
@@ -62,7 +62,8 @@ The container supopse to run on the target device. In order to use the container
 
 ```bash
 % ./join.py # or sudo docker exec -it sagoldev /bin/bash
-% pkill screen
+% screen -l # you'll see 4 sessions in target HW. but here you'll see only 2 due to lack of Lidar and the inference model yet.
+% pkill screen # to clean up processes for the simulation environment
 ```
 
 3. run f1tenth-gym with iros2024 track on Terminal 2
@@ -90,4 +91,5 @@ The rviz2 GUI will be shown with the IROS2024 track. Click "2D Pose Estimate" bu
 % cd sagol_ws/src/sagol/sagol/
 % python3 sb3_driver.py training
 ```
+
 Save your best model into 'saved_models/best.zip'. This inference model will be used by run-sago.sh in your target HW.
