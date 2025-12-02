@@ -24,7 +24,16 @@ This repository serves as an archive of our work, and the **Sagol Yuksu** projec
   * 1 of other DC distribution to VESC
 * Remote Controller(Deadman's Switch) - [Logitech MX Master 3S](https://www.logitech.com/en-us/shop/p/mx-master-3s)
 * Battery - [3S Lipo 5000mAh 11.1v 50C](https://a.co/d/cktotOP)
-* (Optional) [Infrared Proximity Sensor IR Analog Distance Sensor Infrared distance sensor](https://a.co/d/bm82ltS) for helping to reset position during physical RL sessions.
+* (Optional) [Infrared Proximity Sensor IR Analog Distance Sensor Infrared distance sensor](https://a.co/d/bm82ltS) for helping to reset position during physical RL sessions. - Connect 5V, GND and GPIO 23 on R-Pi connector
+
+### 3D print model assets
+
+Find .stl files on [stl](stl) folder in the git repository
+
+* plate layer
+* front form bumper connector (for Regulation compliance)
+* Wing Box for LiDAR dectection (for Regulation compliance)
+* Sagol-pot (special part for increasing totem power)
 
 ## SW Stack
 
