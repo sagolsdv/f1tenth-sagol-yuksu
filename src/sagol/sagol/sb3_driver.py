@@ -47,7 +47,7 @@ class SagolCar(Node):
         self.max_steering = 0.265
         if not self.cmd_args.simulator:
             self.max_steering = 0.265
-            self.setup_back_obstacle_detection_sensor()
+            #self.setup_back_obstacle_detection_sensor()
 
         self.ttc_treshold = TTC_THRESHOLD_REAL_CAR
         self.euclidean_treshold = EUCLIDEAN_THRESHOLD_REAL_CAR
